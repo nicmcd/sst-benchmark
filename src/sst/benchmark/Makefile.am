@@ -12,7 +12,7 @@ libbenchmark_la_SOURCES = \
 	Worker.h \
 	Worker.cc
 
-dist_bin_SCRIPTS = \
+pkgpythondir_DATA = \
     benchmark.py
 
 EXTRA_DIST = \
