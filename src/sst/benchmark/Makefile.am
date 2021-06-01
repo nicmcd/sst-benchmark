@@ -11,8 +11,12 @@ libbenchmark_la_SOURCES = \
 	Worker.h \
 	Worker.cc
 
+libbenchmark_la_CPPFLAGS="-I$(abs_srcdir)"
+
 EXTRA_DIST = \
-    README \
+    README
+
+dist_bin_SCRIPTS = \
     benchmark.py
 
 libbenchmark_la_LDFLAGS = -module -avoid-version
