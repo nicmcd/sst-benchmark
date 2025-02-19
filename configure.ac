@@ -3,10 +3,10 @@
 #
 
 # Set Version of SST Benchmark Library
-AC_INIT([SST Benchmark Library], [-dev], [n.mcdonald83@gmail.com])
+AC_INIT([SST Benchmark Library],[-dev],[n.mcdonald83@gmail.com])
 
 AC_PREREQ([2.59])
-AC_COPYRIGHT([Copyright Nic McDonald, 2021])
+AC_COPYRIGHT([Copyright National Technology and Engineering Solutions of Sandia (NTESS), 2004-2025])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])
@@ -15,13 +15,15 @@ AM_INIT_AUTOMAKE([1.9.6 foreign dist-bzip2 subdir-objects no-define tar-pax])
 # If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-AC_CONFIG_HEADER([src/sst_benchmark_config.h])
+AC_CONFIG_HEADERS([src/sst_benchmark_config.h])
 
 m4_include([config/sst_benchmark_include.m4])
 
+AM_PROG_AS
+
 AC_PROG_CC
 AM_PROG_CC_C_O
-AC_PROG_CC_C99
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), 2.71,, m4_defn([AC_AUTOCONF_VERSION]), 2.70,, [AC_PROG_CC_C99])
 AC_C_INLINE
 AC_PROG_MAKE_SET
 
@@ -32,18 +34,20 @@ AC_PROG_CPP
 AC_CANONICAL_HOST
 
 AC_CACHE_SAVE
-AC_HEADER_TIME
 
 LT_CONFIG_LTDL_DIR([src/libltdl])
 LT_INIT([shared disable-static dlopen])
 LTDL_INIT([recursive])
 
-AC_HEADER_TIME
 AC_CACHE_SAVE
+
+#SST_CHECK_ARIEL_MPI([], [AC_MSG_ERROR([Can't enable Ariel MPI])])
 
 SST_CORE_CHECK_INSTALL()
 
 SST_CHECK_OSX()
+
+SST_CHECK_SPINLOCK()
 
 SST_BENCHMARK_CONFIG_OUTPUT()
 
@@ -53,8 +57,10 @@ SST_CHECK_PICKY
 AS_IF([test "x$use_picky" = "xyes"],
       [WARNFLAGS="-Wall -Wextra"],
       [WARNFLAGS=""])
-CFLAGS="$CFLAGS $WARNFLAGS"
-CXXFLAGS="$CXXFLAGS $WARNFLAGS"
+AM_CFLAGS="$AM_CFLAGS $WARNFLAGS"
+AM_CXXFLAGS="$AM_CXXFLAGS $WARNFLAGS"
+
+AM_EXTRA_RECURSIVE_TARGETS([snippets])
 
 AC_MSG_CHECKING([for SST-Benchmark Git Branch, Head SHA and Commit Count])
 if test -d ".git" ; then
@@ -62,15 +68,15 @@ if test -d ".git" ; then
     AC_MSG_RESULT([${SSTBENCHMARK_GIT_BRANCH}])
     SSTBENCHMARK_GIT_HEADSHA=`git rev-parse HEAD`
     AC_MSG_RESULT([${SSTBENCHMARK_GIT_HEADSHA}])
-    SSTBENCHMARK_GIT_COMMITCOUNT=`git rev-list HEAD | wc -l | sed -e 's/^ *//g'`
-    AC_MSG_RESULT([${SSTBENCHMARK_GIT_COMMITCOUNT}])
+	SSTBENCHMARK_GIT_COMMITCOUNT=`git rev-list HEAD | wc -l | sed -e 's/^ *//g'`
+	AC_MSG_RESULT([${SSTBENCHMARK_GIT_COMMITCOUNT}])
 else
     SSTBENCHMARK_GIT_BRANCH="N/A"
     AC_MSG_RESULT([${SSTBENCHMARK_GIT_BRANCH}])
     SSTBENCHMARK_GIT_HEADSHA="${PACKAGE_VERSION}"
     AC_MSG_RESULT([${SSTBENCHMARK_GIT_HEADSHA}])
-    SSTBENCHMARK_GIT_COMMITCOUNT="0"
-    AC_MSG_RESULT([${SSTBENCHMARK_GIT_COMMITCOUNT}])
+	SSTBENCHMARK_GIT_COMMITCOUNT="0"
+	AC_MSG_RESULT([${SSTBENCHMARK_GIT_COMMITCOUNT}])
 fi
 
 AC_SUBST(SSTBENCHMARK_GIT_BRANCH)
@@ -122,19 +128,13 @@ printf "%38s : %s\n" "C++ Compiler" "$CXX"
 printf "%38s : %s\n" "C Compiler" "$CC"
 printf "%38s : %s\n" "Compiler Version" "$CC_VERSION"
 printf "%38s : %s\n" "Linker" "$LD"
-printf "%38s : %s\n" "Preprocessor Options" "$CPPFLAGS"
-printf "%38s : %s\n" "C Compiler Options" "$CFLAGS"
-printf "%38s : %s\n" "C++ Compiler Options" "$CXXFLAGS"
+printf "%38s : %s\n" "Preprocessor Options" "$AM_CPPFLAGS $CPPFLAGS"
+printf "%38s : %s\n" "C Compiler Options" "$AM_CFLAGS $CFLAGS"
+printf "%38s : %s\n" "C++ Compiler Options" "$AM_CXXFLAGS $CXXFLAGS"
 
-if test "x$found_cxx1y" = "xyes"; then
-printf "%38s : %s\n" "C++ Standard Compliance" "C++1Y/14"
-else
-printf "%38s : %s\n" "C++ Standard Compliance" "C++11"
-fi
+printf "%38s : %s\n" "C++ Standard Compliance" "C++17"
 
-printf "%38s : %s\n" "Linker Options" "$LDFLAGS"
-printf "%38s : %s\n" "Boost Library Preprocessor" "$BOOST_CPPFLAGS"
-printf "%38s : %s\n" "Boost Library Linker Options" "$BOOST_LDFLAGS"
+printf "%38s : %s\n" "Linker Options" "$AM_LDFLAGS $LDFLAGS"
 echo ""
 echo "-------------------------------------------------------"
 echo "Configuration Information (Found Dependencies):"

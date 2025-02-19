@@ -40,7 +40,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy
 import os
-import ssplot
+import nplot
 import taskrun
 
 def main(args):
@@ -48,13 +48,7 @@ def main(args):
   if not os.path.isdir(args.odir):
     os.mkdir(args.odir)
 
-  rm = taskrun.ResourceManager(
-    taskrun.CounterResource('cpus', os.cpu_count(), os.cpu_count()))
-  cob = taskrun.FileCleanupObserver()
-  vob = taskrun.VerboseObserver(show_description=args.verbose)
-  tm = taskrun.TaskManager(resource_manager=rm,
-                           observers=[cob, vob],
-                           failure_mode=taskrun.FailureMode.AGGRESSIVE_FAIL)
+  tm = taskrun.basic_task_manager()
 
   cpus_list = [x for x in range(args.start, args.stop+1, args.step)]
 
@@ -77,19 +71,18 @@ def main(args):
     initial_events = layout[1]
     for cpus in cpus_list:
       for run in range(args.runs):
-        name = '{}_{}_{}_{}'.format(components, initial_events, cpus, run)
+        name = f'{components}_{initial_events}_{cpus}_{run}'
         log_file = os.path.join(args.odir, name + '.log')
         stats_file = os.path.join(args.odir, name + '.csv')
         cmd = ''
         if args.mode == 'threads':
-          cmd += 'sst -v -n {} '.format(cpus)
+          cmd += f'sst -v -n {cpus} '
         elif args.mode == 'processes':
-          cmd += 'mpirun -n {} sst -v '.format(cpus)
+          cmd += f'mpirun -n {cpus} sst -v '
         else:
           assert False, 'programmer error :('
-        cmd += '{} -- {} {} {} -i {} -r 1.0 -c {}'.format(
-          args.app, components, args.topo, stats_file, initial_events,
-          num_cycles)
+        cmd += (f'{args.app} -- {components} {args.topo} {stats_file} -i '
+                f'{initial_events} -r 1.0 -c {num_cycles}'
         task = taskrun.ProcessTask(tm, name, cmd)
         task.stdout_file = log_file
         task.add_condition(taskrun.FileModificationCondition(
@@ -109,12 +102,12 @@ def main(args):
     for cpus in cpus_list:
       rate_sum = 0
       for run in range(args.runs):
-        name = '{}_{}_{}_{}'.format(components, initial_events, cpus, run)
+        name = f'{components}_{initial_events}_{cpus}_{run}'
         log_file = os.path.join(args.odir, name + '.log')
         stats_file = os.path.join(args.odir, name + '.csv')
         rate = extract_rate(log_file, stats_file, components)
         rate_sum += rate
-        print('{} -> {}'.format(name, rate))
+        print(f'{name} -> {rate}')
       data[-1].append(rate_sum / args.runs)
 
   print(data)
@@ -127,7 +120,7 @@ def main(args):
       print(','.join([str(x) for x in data[idx]]), file=fd)
 
   mlp = ssplot.MultilinePlot(plt, cpus_list, data)
-  mlp.set_title('SST-Benchmark Performance ({})'.format(args.topo))
+  mlp.set_title(f'SST-Benchmark Performance ({args.topo})'
   if args.mode == 'threads':
     mlp.set_xlabel('Number of threads')
   elif args.mode == 'processes':

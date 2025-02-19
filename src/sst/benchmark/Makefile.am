@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = \
+AM_CPPFLAGS += \
 	$(MPI_CPPFLAGS) \
 	-I $(abs_top_srcdir)/src/
 

@@ -48,7 +48,7 @@ def main(args):
   # Makes workers and sets parameters.
   workers = []
   for worker_id in range(args.num_workers):
-    worker = sst.Component('Worker_{}'.format(worker_id), 'benchmark.Worker')
+    worker = sst.Component(f'Worker_{worker_id}', 'benchmark.Worker')
     worker.addParam('num_peers', num_peers)
     worker.addParam('tx_peers', tx_peers)
     if args.verbosity != None:
@@ -67,21 +67,21 @@ def main(args):
     ports = [0] * args.num_workers
     for worker_a in range(args.num_workers):
       for worker_b in range(worker_a, args.num_workers):
-        link_name = 'link_{}_{}'.format(worker_a, worker_b)
+        link_name = f'link_{worker_a}_{worker_b}'
         if worker_a != worker_b:
           link = sst.Link(link_name, '1ns')
-          link.connect((workers[worker_a], 'port_{}'.format(ports[worker_a])),
-                       (workers[worker_b], 'port_{}'.format(ports[worker_b])))
+          link.connect((workers[worker_a], f'port_{ports[worker_a]}'),
+                       (workers[worker_b], f'port_{ports[worker_b]}'))
           ports[worker_a] += 1
           ports[worker_b] += 1
   elif args.topology == 'ring':
     # Every worker connects to right and left workers.
     for worker_a in range(args.num_workers):
       worker_b = (worker_a + 1) % args.num_workers
-      link_name = 'link_{}_{}'.format(worker_a, worker_b)
+      link_name = f'link_{worker_a}_{worker_b}'
       link = sst.Link(link_name, '1ns')
-      link.connect((workers[worker_a], 'port_{}'.format(0)),
-                   (workers[worker_b], 'port_{}'.format(1)))
+      link.connect((workers[worker_a], 'port_{0}'),
+                   (workers[worker_b], 'port_{1}'))
   else:
     assert False, 'Programmer Error :('
 
@@ -97,7 +97,7 @@ def main(args):
 
 if __name__ == '__main__':
   ap = argparse.ArgumentParser()
-  ap.add_argument('num_workers', type=int, default=10,
+  ap.add_argument('num_workers', type=int,
                   help='Number of workers.')
   ap.add_argument('topology', type=str, choices=['all-to-all', 'ring'],
                   help='Topology of worker connections.')

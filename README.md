@@ -22,14 +22,14 @@ Running the SST-Benchmark is as follows:
 
 ``` bash
 $ cd $HOME/scratch/src/sst-benchmark
-$ sst src/sst/benchmark/benchmark.py 10
+$ sst src/sst/benchmark/benchmark.py -- 10 all-to-all StatisticOutput.csv
 ```
 
 This runs the benchmark using 10 worker components in the "all-to-all" configuration. To get any useful information as a benchmark, you'll need to get SST's execution time and the total number of events. SST will show the execution time when run with `-v`. Each worker logs the number of events it generated during the execution. These are written to "StatisticOutput.csv".
 
 ``` bash
 $ cd $HOME/scratch/src/sst-benchmark
-$ sst -v src/sst/benchmark/benchmark.py all-to-all 10 | grep 'Simulation time:'
+$ sst -v src/sst/benchmark/benchmark.py -- 10 all-to-all StatisticOutput.csv | grep 'Simulation time:'
 0.022400 seconds
 $ awk '{print $9}' StatisticOutput.csv | tr ',' ' ' | awk '{s+=$1} END {print s}'
 100000
