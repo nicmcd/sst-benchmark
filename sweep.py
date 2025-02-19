@@ -82,7 +82,7 @@ def main(args):
         else:
           assert False, 'programmer error :('
         cmd += (f'{args.app} -- {components} {args.topo} {stats_file} -i '
-                f'{initial_events} -r 1.0 -c {num_cycles}'
+                f'{initial_events} -r 1.0 -c {num_cycles}')
         task = taskrun.ProcessTask(tm, name, cmd)
         task.stdout_file = log_file
         task.add_condition(taskrun.FileModificationCondition(
@@ -106,8 +106,8 @@ def main(args):
         log_file = os.path.join(args.odir, name + '.log')
         stats_file = os.path.join(args.odir, name + '.csv')
         rate = extract_rate(log_file, stats_file, components)
-        rate_sum += rate
         print(f'{name} -> {rate}')
+        rate_sum += rate
       data[-1].append(rate_sum / args.runs)
 
   print(data)
@@ -119,8 +119,8 @@ def main(args):
       print(data_labels[idx] + ',', file=fd, end='')
       print(','.join([str(x) for x in data[idx]]), file=fd)
 
-  mlp = ssplot.MultilinePlot(plt, cpus_list, data)
-  mlp.set_title(f'SST-Benchmark Performance ({args.topo})'
+  mlp = nplot.LinePlot(plt, cpus_list, data)
+  mlp.set_title(f'SST-Benchmark Performance ({args.topo})')
   if args.mode == 'threads':
     mlp.set_xlabel('Number of threads')
   elif args.mode == 'processes':
@@ -138,8 +138,12 @@ def extract_rate(log_file, stats_file, expected_components):
   sim_time = None
   with open(log_file) as fd:
     for line in fd:
-      if line.find('Simulation time:') == 0:
-        sim_time = float(line.split()[2])
+      if line.find('  Run loop time: ') == 0:
+        words = line.split()
+        units = words[-1]
+        assert units == 'seconds', 'Wall time wasn\'t reported in seconds'
+        sim_time = float(words[-2])
+        break
   assert sim_time is not None, log_file
 
   ext_loc = stats_file.rfind('.')
